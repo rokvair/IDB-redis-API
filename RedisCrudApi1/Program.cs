@@ -1,4 +1,4 @@
-using Microsoft.OpenApi.Models;
+﻿using Microsoft.OpenApi.Models;
 using StackExchange.Redis;
 using RedisCrudApi.Services;
 
@@ -20,14 +20,20 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     ConnectionMultiplexer.Connect(connectionString)
 );
 
+
 // Register RedisService
 builder.Services.AddScoped<RedisService>();
 
 var app = builder.Build();
-
+using (var scope = app.Services.CreateScope())
+{
+    var redis = scope.ServiceProvider.GetRequiredService<RedisService>();
+    bool ok = await redis.TestConnectionAsync();
+    Console.WriteLine(ok ? " Connected to Redis!" : " Failed to connect to Redis");
+}
 app.UseSwagger();
 app.UseSwaggerUI();
-
+app.UseRouting();
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();

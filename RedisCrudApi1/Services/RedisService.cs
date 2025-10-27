@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
-using StackExchange.Redis;
 using RedisCrudApi.Models;
+using StackExchange.Redis;
+using System.Data.Common;
 
 namespace RedisCrudApi.Services
 {
@@ -227,5 +228,25 @@ namespace RedisCrudApi.Services
                 await champDb.KeyDeleteAsync($"Championship:{id}:Sponsors");
             }
         }
+        /// <summary>
+        /// Test connection to Redis server
+        /// </summary>
+        /// <returns></returns>
+        public async Task<bool> TestConnectionAsync()
+        {
+            try
+            {
+                var pong = await _mux.GetDatabase().PingAsync();
+                Console.WriteLine($"Redis responded: {pong}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Redis connection failed: {ex.Message}");
+                return false;
+            }
+        }
+
+
     }
 }
