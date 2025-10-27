@@ -1,0 +1,35 @@
+using Microsoft.OpenApi.Models;
+using StackExchange.Redis;
+using RedisCrudApi.Services;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add configuration
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "RedisCrudApi", Version = "v1" });
+});
+
+// Register Redis multiplexer as singleton
+var redisHost = builder.Configuration["Redis:Host"] ?? "localhost";
+var redisPort = builder.Configuration["Redis:Port"] ?? "6379";
+var connectionString = $"{redisHost}:{redisPort}";
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+    ConnectionMultiplexer.Connect(connectionString)
+);
+
+// Register RedisService
+builder.Services.AddScoped<RedisService>();
+
+var app = builder.Build();
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
+app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapControllers();
+
+app.Run();
