@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Models;
 using RedisCrudApi.Services;
 
@@ -6,11 +6,11 @@ namespace RedisCrudApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class TeamController : ControllerBase
+    public class PlayerController : ControllerBase
     {
-        private readonly TeamService _redis;
+        private readonly PlayerService _redis;
 
-        public TeamController(TeamService redis)
+        public PlayerController(PlayerService redis)
         {
             _redis = redis;
         }
@@ -25,35 +25,31 @@ namespace RedisCrudApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetListAsync([FromQuery] string db = "DB21")
         {
-            string table = "Team";
+            string table = "Player";
 
             if (!db.StartsWith("DB", StringComparison.OrdinalIgnoreCase))
                 db = "DB" + db;
 
-            var teams = await _redis.GetListAsync(db, table);
+            var players = await _redis.GetListAsync(db, table);
 
-            if (teams.Count == 0)
+            if (players.Count == 0)
                 return NotFound($"No records found in table '{table}'");
 
-            return Ok(teams);
+            return Ok(players);
         }
 
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateAsync([FromBody] TeamModel model)
+        public async Task<IActionResult> CreateAsync([FromBody] PlayerModel model)
         {
-            string table = "Team";
+            string table = "Player";
 
 
             string vNode = ComputeVNode(table);
 
 
-            string hzNode = ComputeHzNode(model.Country);
+            string hzNode = ComputeHzNodeFromID(model.FK_Team_Id);
             string dbName = "DB" + vNode + hzNode;
-
-            bool exists = await _redis.TeamNameExistsAsync(dbName, table, model.Name);
-            if (exists)
-                return Conflict($"A team with the name '{model.Name}' already exists.");
 
             var id = await _redis.CreateAsync(dbName, table, model);
             return Ok(new { id, table, dbName });
@@ -62,7 +58,7 @@ namespace RedisCrudApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAsync(string id)
         {
-            string table = "Team";
+            string table = "Player";
             if (string.IsNullOrWhiteSpace(table)) return BadRequest("table is required.");
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("id is required.");
 
@@ -80,7 +76,7 @@ namespace RedisCrudApi.Controllers
         [HttpGet("list/{id}")]
         public async Task<IActionResult> GetAsync(string id)
         {
-            string table = "Team";
+            string table = "Player";
             string hzNode = ComputeHzNodeFromID(id);
 
             string vNode = ComputeVNode(table);
@@ -98,9 +94,9 @@ namespace RedisCrudApi.Controllers
 
 
         [HttpPut("{id}")]
-public async Task<IActionResult> UpdateAsync(string id, [FromBody] TeamModel body)
+public async Task<IActionResult> UpdateAsync(string id, [FromBody] PlayerModel body)
         {
-            string table = "Team";
+            string table = "Player";
     if (string.IsNullOrWhiteSpace(table)) return BadRequest("table is required.");
     if (string.IsNullOrWhiteSpace(id))    return BadRequest("id is required.");
     if (!ModelState.IsValid)              return ValidationProblem(ModelState);
@@ -108,12 +104,12 @@ public async Task<IActionResult> UpdateAsync(string id, [FromBody] TeamModel bod
     // Match your sharding logic
     string hzNode = ComputeHzNodeFromID(id);
     string vNode  = ComputeVNode(table);
-    string dbName = "DB" + vNode + hzNode;
+            string dbName = "DB" + vNode + hzNode;
 
     try
     {
         var updated = await _redis.UpdateAsync(dbName, table, id, body);
-        if (!updated) return NotFound($"Team with id '{id}' does not exist.");
+        if (!updated) return NotFound($"Player with id '{id}' does not exist.");
         return NoContent();
     }
     catch (InvalidOperationException ex)
@@ -145,7 +141,7 @@ public async Task<IActionResult> UpdateAsync(string id, [FromBody] TeamModel bod
 
         private static string ComputeHzNodeFromID(string key)
         {
-            return key[0] switch { 'A' => "1", 'B' => "2", _ => throw new ArgumentException("id must start with A or B") };
+            return key[0] switch { 'A' => "1", 'B' => "2", _ => throw new ArgumentException("Team id must start with A or B") };
         }
 
 

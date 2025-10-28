@@ -22,8 +22,27 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 );
 
 
+builder.Services.AddSingleton<IDictionary<string, IDatabase>>(sp =>
+{
+    var mux = sp.GetRequiredService<IConnectionMultiplexer>();
+
+    // map your logical DB names to actual databases
+    // (examples—adjust to your real mapping)
+    return new Dictionary<string, IDatabase>
+    {
+        ["DB11"] = mux.GetDatabase(11),
+        ["DB12"] = mux.GetDatabase(12),
+        ["DB21"] = mux.GetDatabase(21),
+        ["DB22"] = mux.GetDatabase(22),
+        ["DB31"] = mux.GetDatabase(31),
+        // ...
+    };
+});
+
 // Register TeamService
 builder.Services.AddScoped<TeamService>();
+builder.Services.AddScoped<PlayerService>();
+builder.Services.AddScoped<CoachService>();
 
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())

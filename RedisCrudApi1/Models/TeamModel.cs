@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
-public class TeamCreateModel
+namespace Models;
+public class TeamModel
 {
     [Required]
     public string Country { get; set; }
@@ -15,5 +16,5 @@ public class TeamCreateModel
     public float Value { get; set; }
 
     [Required]
-    public int Created_at{ get; set; }
+    public int Created_at { get; set; }
 }
